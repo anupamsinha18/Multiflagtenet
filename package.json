@@ -1,0 +1,12 @@
+{
+  "name": "multi-tenant-feature-flags-monorepo",
+  "version": "1.0.0",
+  "description": "Multi-Tenant Feature Flag System Workspace",
+  "scripts": {
+    "backend": "cd backend && npm run dev",
+    "super-admin": "cd super-admin-frontend && npm run dev",
+    "admin": "cd admin-frontend && npm run dev",
+    "user": "cd user-frontend && npm run dev",
+    "start-all": "npm run backend & npm run super-admin & npm run admin & npm run user"
+  }
+}
