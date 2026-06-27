@@ -1,131 +1,62 @@
-# Multi-Tenant Feature Flag Management System
+# Multi-Tenant Feature Flag System
 
-A lightweight, multi-tenant SaaS-like feature flag management system designed to demonstrate clean API design, data scoping, role-based access control (RBAC), and user role flows.
+This is a simple system built to manage and test feature flags across different organizations (tenants). 
 
-The system is split into:
-1. **Node.js/Express Backend** with SQLite storage and custom JWT-based authentication.
-2. **Super Admin Frontend** for tenant organization registration.
-3. **Organization Admin Frontend** for tenant administrators to register, manage feature flags, and provision end-user credentials.
-4. **End User Frontend** for clients to check which feature flags are active for their specific organization.
-
----
-
-## 🏛️ System Architecture & Scoping
-
-This system implements **logical multi-tenancy** using a shared-database approach. Every tenant organization is mapped to a unique ID in the database. Feature flags and user accounts are strictly scoped to their respective `organization_id` column to guarantee logical data isolation between tenants.
-
-```mermaid
-erDiagram
-    organizations {
-        int id PK
-        string name
-        datetime created_at
-    }
-    roles {
-        int id PK
-        string name "org_admin | end_user"
-    }
-    users {
-        int id PK
-        string username
-        string password_hash
-        int organization_id FK
-        int role_id FK
-        datetime created_at
-    }
-    feature_flags {
-        int id PK
-        int organization_id FK
-        string feature_key
-        int is_enabled "0 or 1"
-        string description
-        datetime created_at
-        datetime updated_at
-    }
-
-    organizations ||--o{ users : "has members"
-    organizations ||--o{ feature_flags : "scopes flags"
-    roles ||--o{ users : "defines access"
-```
+It has three main parts:
+1. **Backend**: A Node.js and Express server that handles users, organizations, and feature flags. It stores data in a local SQLite file and uses JWT (tokens) for login.
+2. **Super Admin Frontend**: A simple panel where you can register new organizations.
+3. **Admin Frontend**: A panel where an organization admin can log in, create/toggle feature flags for their company, and create test credentials for end users.
+4. **User Frontend**: A page where end users can log in and check if a specific feature is enabled for their organization.
 
 ---
 
-## 👥 System Roles & Capabilities
+## 👥 How the Roles Work
 
-### 1. Super Admin
-* **Access**: Hardcoded config-based static credentials.
-* **Responsibilities**:
-  * Log in securely.
-  * Create tenant organizations.
-  * View directory statistics (total organizations, registered users/admins per tenant, total flags deployed).
+1. **Super Admin**
+   - Credentials are hardcoded: Username `superadmin` and Password `superadminpassword`.
+   - Used to create new organizations (tenants).
 
-### 2. Organization (Tenant) Admin
-* **Access**: Can sign up under a registered organization and log in using database-backed credentials.
-* **Responsibilities**:
-  * Manage feature flags for their organization (Create, Toggle state, Delete).
-  * Provision credentials for End Users (e.g. employees or client systems) scoped to their tenant.
+2. **Organization Admin**
+   - Can register under any organization created by the Super Admin.
+   - Used to manage feature flags (turn them on/off) and create client accounts for that organization.
 
-### 3. End User
-* **Access**: Logs in with credentials provisioned by their Organization Admin.
-* **Responsibilities**:
-  * Check the real-time status of feature keys (active/inactive) for their organization.
+3. **End User**
+   - Log in using credentials created by their Organization Admin.
+   - Can search for a feature key (e.g., `enable_dark_mode`) to see if it is enabled or disabled.
 
 ---
 
-## ⚙️ Tech Stack & Constraints
+## 🚀 How to Run the Project
 
-* **Backend**: Node.js & Express framework.
-* **Database**: SQLite3 (`sqlite3` module with a custom Promise-based wrapper for async/await operations).
-* **Authentication**: Custom JWT authentication (`jsonwebtoken` + `bcryptjs` for password hashing). No external auth providers are used, maintaining full local control.
-* **Frontend**: Three decoupled React applications built with Vite.
-* **Styling**: Clean, standard, custom CSS stylesheet using the corporate-standard `Inter` font, avoiding flashy animations or AI-style neon/glassmorphism templates to keep the UI professional and authentic.
+1. **Install everything**
+   In the main root directory of the project, run:
+   ```bash
+   npm install
+   cd backend && npm install
+   cd ../super-admin-frontend && npm install
+   cd ../admin-frontend && npm install
+   cd ../user-frontend && npm install
+   cd ..
+   ```
 
----
-
-## 🚀 Running the Project
-
-### Prerequisites
-* [Node.js](https://nodejs.org/) (v16+ recommended)
-* npm (v8+ recommended)
-
-### 1. Install Dependencies
-Run the installation command in the root folder to download package dependencies across the workspace:
-```bash
-npm install
-cd backend && npm install
-cd ../super-admin-frontend && npm install
-cd ../admin-frontend && npm install
-cd ../user-frontend && npm install
-cd ..
-```
-
-### 2. Start All Services
-You can spin up the backend server and all three frontends concurrently using the workspace launcher:
-```bash
-npm run start-all
-```
-This script starts:
-* **Node.js Server**: [http://localhost:5001](http://localhost:5001)
-* **Super Admin Portal**: [http://localhost:3001](http://localhost:3001) (Credentials: `superadmin` / `superadminpassword`)
-* **Organization Admin Portal**: [http://localhost:3002](http://localhost:3002)
-* **End User Tester Portal**: [http://localhost:3003](http://localhost:3003)
+2. **Start all servers**
+   Start the backend and all three frontends at the same time using:
+   ```bash
+   npm run start-all
+   ```
+   This will open:
+   - Super Admin: http://localhost:3001
+   - Organization Admin: http://localhost:3002
+   - End User testing: http://localhost:3003
+   - Backend API: http://localhost:5001
 
 ---
 
-## 🧪 Verification & Testing
+## 🧪 Testing the APIs
 
-The backend includes a dedicated test script (`backend/verify.js`) that automatically simulates the entire SaaS lifecycle:
-1. Log in as Super Admin.
-2. Create test organizations.
-3. Register tenant admins for each organization.
-4. Authenticate as those admins and deploy unique sets of feature flags.
-5. Create scoped end-user credentials.
-6. Retrieve and verify that the flags are securely scoped to their respective tenants and return the correct boolean states.
-
-### Running the API Test Suite:
-To execute a clean integration test run:
-1. Stop any running backend instances.
-2. Reset the database to guarantee a clean slate:
+We have a test script that automatically verifies all API logic. To run it:
+1. Make sure all servers are stopped.
+2. Delete the old database file so we start fresh:
    ```bash
    rm -f backend/database.sqlite
    ```
@@ -133,8 +64,8 @@ To execute a clean integration test run:
    ```bash
    cd backend && npm run dev
    ```
-4. In another terminal tab, run the test runner script:
+4. In a separate terminal tab, run the test script:
    ```bash
    cd backend && node verify.js
    ```
-5. You should see `All API tests passed successfully!` in your console.
+5. You should see `All API tests passed successfully!` at the end.
